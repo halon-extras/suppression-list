@@ -1,0 +1,22 @@
+[
+    {
+        "name": "suppression",
+        "parameters": {
+            "required": [
+                {
+                    "name": "id",
+                    "type": "string"
+                },
+                {
+                    "name": "email",
+                    "type": "string"
+                }
+            ]
+        },
+        "returnType": "boolean or none",
+        "detail": "suppression(string id, string email): boolean or none",
+        "value": "suppression($0)",
+        "documentation": "Check if an email is in a suppression list.",
+        "link": "[Full documentation](https://github.com/halon-extras/suppression)"
+    }
+]
