@@ -51,16 +51,16 @@ HALON_EXPORT
 bool Halon_command_execute(HalonCommandExecuteContext* hcec, size_t argc, const char* argv[], size_t argvl[], char** out, size_t* outlen)
 {
 	try {
-        if (argc > 1 && strcmp(argv[0], "reload") == 0)
-        {
+		if (argc > 1 && strcmp(argv[0], "reload") == 0)
+		{
 			list_reopen(argv[1]);
-            *out = strdup("OK");
-            return true;
-        }
+			*out = strdup("OK");
+			return true;
+		}
 		throw std::runtime_error("No such command");
 	} catch (const std::runtime_error& e) {
-        *out = strdup(e.what());
-    	return false;
+		*out = strdup(e.what());
+		return false;
 	}
 }
 
@@ -116,20 +116,20 @@ void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list)
 	std::ifstream file(path);
 	if (!file.good())
 		throw std::runtime_error("Could not open file: " + path);
-    std::string line;
-    while (std::getline(file, line))
+	std::string line;
+	while (std::getline(file, line))
 	{
 		if (line.empty()) continue;
 		if (line.size() > 2 && line[0] == '/' && line[line.size() - 1] == '/')
 			list->regexs.push_back(pcrecpp::RE(line.substr(1, line.size() - 2)));
 		else if (line[0] == '@')
- 	    	list->domains.insert(line.substr(1));
+			list->domains.insert(line.substr(1));
 		else if (line[line.size() - 1] == '@')
 			list->localparts.insert(line.substr(0, line.size() - 1));
 		else
 			list->emails.insert(line);
-    }
-    file.close();
+	}
+	file.close();
 	syslog(LOG_INFO, "suppressionlist %s loaded: %zu emails, %zu localparts, %zu domains, %zu regexes",
 		path.c_str(),
 		list->emails.size(),
