@@ -26,6 +26,17 @@ yum install halon-extras-suppression-list
 
 For the configuration schema, see [suppression-list.schema.json](suppression-list.schema.json).
 
+### smtpd.yaml
+
+```
+plugins:
+  - id: suppression-list
+    config:
+      lists:
+        - id: list1
+          path: /var/run/halon/list1.txt
+```
+
 ### Suppression list format
 
 The following syntax is supported in the suppression list file.
