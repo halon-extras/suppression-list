@@ -9,6 +9,8 @@
 #include <syslog.h>
 #include <pcre.h>
 
+extern char *__progname;
+
 void list_open(const std::string& list, const std::string& path);
 bool list_lookup(const std::string& list, const std::string& recipient);
 void list_reopen(const std::string& list);
@@ -149,14 +151,15 @@ void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list)
 			list->emails.insert(line);
 	}
 	file.close();
-	syslog(LOG_INFO, "suppression-list %s loaded: %zu emails, %zu localparts, %zu domains, %zu regexes, %zu regex-errors",
-		path.c_str(),
-		list->emails.size(),
-		list->localparts.size(),
-		list->domains.size(),
-		list->regexs.size(),
-		errors
-	);
+	if (strcmp(__progname, "smtpd") == 0)
+		syslog(LOG_INFO, "suppression-list %s loaded: %zu emails, %zu localparts, %zu domains, %zu regexes, %zu regex-errors",
+			path.c_str(),
+			list->emails.size(),
+			list->localparts.size(),
+			list->domains.size(),
+			list->regexs.size(),
+			errors
+		);
 }
 
 void list_open(const std::string& list, const std::string& path)

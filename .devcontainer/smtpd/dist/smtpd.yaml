@@ -17,7 +17,7 @@ environment:
   rlimit:
     nofile: 70000
 plugins:
-  - id: suppression
+  - id: suppression-list
     config:
       lists:
         - id: list1
