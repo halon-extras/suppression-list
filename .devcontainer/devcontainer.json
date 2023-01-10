@@ -1,9 +1,9 @@
 {
-	"name": "suppression",
+	"name": "suppression-list",
 	"dockerComposeFile": [
 		"docker-compose.yaml"
 	],
-	"workspaceFolder": "/suppression",
+	"workspaceFolder": "/suppression-list",
 	"service": "halon-smtpd",
 	"overrideCommand": false,
 	"extensions": [

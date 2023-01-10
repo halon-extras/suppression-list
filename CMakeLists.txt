@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
-PROJECT("suppression" VERSION 1.0.0)
+PROJECT("suppression-list" VERSION 1.0.0)
 
 # RPM/DEB and CENTOS7/CENTOS8/UBU1804/UBU2004/UBU2204
 IF (EXISTS "${CMAKE_CURRENT_BINARY_DIR}/OSRELEASE.txt")
@@ -28,15 +28,15 @@ ENDIF()
 SET(CMAKE_BUILD_TYPE Release)
 SET(CMAKE_CXX_FLAGS_RELEASE "-std=c++17 -Wall -Wvla -Wshadow -Wconversion -Wno-sign-conversion -Wno-c++11-narrowing -O2 -fno-strict-aliasing -Wextra -Wno-unused-parameter")
 
-ADD_LIBRARY(suppression SHARED
-	suppression.cpp
+ADD_LIBRARY(suppression-list SHARED
+	suppression-list.cpp
 )
 
-TARGET_LINK_LIBRARIES(suppression
+TARGET_LINK_LIBRARIES(suppression-list
 	pcrecpp
 )
 
-SET_TARGET_PROPERTIES(suppression PROPERTIES PREFIX "")
+SET_TARGET_PROPERTIES(suppression-list PROPERTIES PREFIX "")
 
 INCLUDE_DIRECTORIES(
 	/opt/halon/include
@@ -49,20 +49,20 @@ IF(EXISTS "/etc/os-release")
 	SET(SYSTEM_NAME "${OS_RELEASE_ID}-${OS_RELEASE_VERSION_ID}-${OS_RELEASE_ARCH}")
 ENDIF()
 
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/suppression.so DESTINATION plugins)
-INSTALL(FILES suppression.schema.json DESTINATION share/plugins)
-INSTALL(FILES suppression.functions.json DESTINATION share/plugins)
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/suppression-list.so DESTINATION plugins)
+INSTALL(FILES suppression-list.schema.json DESTINATION share/plugins)
+INSTALL(FILES suppression-list.functions.json DESTINATION share/plugins)
 
 IF(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.14.0") 
-	FILE(CREATE_LINK "/opt/halon/plugins/suppression.so" "${CMAKE_CURRENT_BINARY_DIR}/suppression.so.link" SYMBOLIC)
+	FILE(CREATE_LINK "/opt/halon/plugins/suppression-list.so" "${CMAKE_CURRENT_BINARY_DIR}/suppression-list.so.link" SYMBOLIC)
 ELSE()
-	ADD_CUSTOM_TARGET(link_target ALL COMMAND ${CMAKE_COMMAND} -E create_symlink "/opt/halon/plugins/suppression.so" "${CMAKE_CURRENT_BINARY_DIR}/suppression.so.link")
+	ADD_CUSTOM_TARGET(link_target ALL COMMAND ${CMAKE_COMMAND} -E create_symlink "/opt/halon/plugins/suppression-list.so" "${CMAKE_CURRENT_BINARY_DIR}/suppression-list.so.link")
 ENDIF()
 
-INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/suppression.so.link" DESTINATION plugins/autoload/smtpd RENAME suppression.so)
-INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/suppression.so.link" DESTINATION plugins/autoload/hsh RENAME suppression.so)
+INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/suppression-list.so.link" DESTINATION plugins/autoload/smtpd RENAME suppression-list.so)
+INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/suppression-list.so.link" DESTINATION plugins/autoload/hsh RENAME suppression-list.so)
 
-INSTALL(FILES "LICENSE" DESTINATION share/doc/plugins/suppression)
+INSTALL(FILES "LICENSE" DESTINATION share/doc/plugins/suppression-list)
 
 SET(CMAKE_INSTALL_PREFIX "/opt/halon")
 SET(CPACK_PACKAGING_INSTALL_PREFIX "/opt/halon")
@@ -79,10 +79,10 @@ IF (CPACK_GENERATOR MATCHES "RPM")
 	SET(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/postrm")
 ENDIF()
 
-SET(CPACK_PACKAGE_NAME "halon-extras-suppression")
+SET(CPACK_PACKAGE_NAME "halon-extras-suppression-list")
 SET(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Halon extras suppression plugin")
-SET(CPACK_PACKAGE_DESCRIPTION "Halon extras suppression plugin")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Halon extras suppression-list plugin")
+SET(CPACK_PACKAGE_DESCRIPTION "Halon extras suppression-list plugin")
 SET(CPACK_PACKAGE_CONTACT "Halon support@halon.io")
 SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${PROJECT_VERSION}-${SYSTEM_NAME}")
 

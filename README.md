@@ -1,9 +1,9 @@
-# Suppression plugin
+# Suppression list plugin
 
-This plugin allows you to define custom suppression lists which may be check from HSL (```suppression(id, email)```). The file may be reloaded after being updated using the halonctl command.
+This plugin allows you to define custom suppression lists which may be check from HSL (```suppression_list(id, email)```). The file may be reloaded after being updated using the halonctl command.
 
 ```
-halonctl plugin command suppression reload list1
+halonctl plugin command suppression-list reload list1
 ```
 
 ## Installation
@@ -13,18 +13,18 @@ Follow the [instructions](https://docs.halon.io/manual/comp_install.html#install
 ### Ubuntu
 
 ```
-apt-get install halon-extras-suppression
+apt-get install halon-extras-suppression-list
 ```
 
 ### RHEL
 
 ```
-yum install halon-extras-suppression
+yum install halon-extras-suppression-list
 ```
 
 ## Configuration
 
-For the configuration schema, see [suppression.schema.json](suppression.schema.json).
+For the configuration schema, see [suppression-list.schema.json](suppression-list.schema.json).
 
 ### Suppression list format
 
@@ -39,9 +39,9 @@ localpart@
 
 ## Exported functions
 
-These functions needs to be [imported](https://docs.halon.io/hsl/structures.html#import) from the `extras://suppression` module path.
+These functions needs to be [imported](https://docs.halon.io/hsl/structures.html#import) from the `extras://suppression-list` module path.
 
-### suppression(id, email)
+### suppression_list(id, email)
 
 Check is email in in a suppression list based on its ID.
 
@@ -57,6 +57,6 @@ Returns a `boolean` if the email was on the list or not. On error `none` is retu
 **Example**
 
 ```
-import { suppression } from "extras://suppression";
-echo suppression("list1", "user@example.com");
+import { suppression_list } from "extras://suppression-list";
+echo suppression_list("list1", "user@example.com");
 ```

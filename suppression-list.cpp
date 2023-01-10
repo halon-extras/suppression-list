@@ -65,7 +65,7 @@ bool Halon_command_execute(HalonCommandExecuteContext* hcec, size_t argc, const 
 }
 
 HALON_EXPORT
-void suppression(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLValue* ret)
+void suppression_list(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLValue* ret)
 {
 	HalonHSLValue* x;
 	char* id = nullptr;
@@ -95,7 +95,7 @@ void suppression(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLValue* r
 HALON_EXPORT
 bool Halon_hsl_register(HalonHSLRegisterContext* ptr)
 {
-	HalonMTA_hsl_module_register_function(ptr, "suppression", &suppression);
+	HalonMTA_hsl_module_register_function(ptr, "suppression_list", &suppression_list);
 	return true;
 }
 
@@ -123,6 +123,7 @@ void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list)
 	if (!file.good())
 		throw std::runtime_error("Could not open file: " + path);
 	std::string line;
+	size_t errors = 0;
 	while (std::getline(file, line))
 	{
 		if (line.empty()) continue;
@@ -134,6 +135,7 @@ void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list)
 			if (!re)
 			{
 				syslog(LOG_ERR, "%s: %s: %s", path.c_str(), line.c_str(), compile_error);
+				++errors;
 				continue;
 //				throw std::runtime_error(compile_error);
 			}
@@ -147,12 +149,13 @@ void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list)
 			list->emails.insert(line);
 	}
 	file.close();
-	syslog(LOG_INFO, "suppressionlist %s loaded: %zu emails, %zu localparts, %zu domains, %zu regexes",
+	syslog(LOG_INFO, "suppression-list %s loaded: %zu emails, %zu localparts, %zu domains, %zu regexes, %zu regex-errors",
 		path.c_str(),
 		list->emails.size(),
 		list->localparts.size(),
 		list->domains.size(),
-		list->regexs.size()
+		list->regexs.size(),
+		errors
 	);
 }
 
