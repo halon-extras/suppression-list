@@ -24,7 +24,7 @@ ENV BASH_ENV="/usr/bin/scl_enable" \
     ENV="/usr/bin/scl_enable" \
     PROMPT_COMMAND=". /usr/bin/scl_enable"
 
-RUN yum install -y cmake3 make gcc-c++ rpm-build
+RUN yum install -y cmake3 make gcc-c++ rpm-build pcre-devel
 RUN echo -n "CENTOS7" > /OSRELEASE.txt
 
 COPY build.sh /build.sh

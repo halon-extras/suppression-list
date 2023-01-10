@@ -14,7 +14,7 @@ RUN echo "deb https://repo.halon.io/ bionic stable" >> /etc/apt/sources.list.d/h
 RUN echo "machine repo.halon.io login ${HALON_REPO_USER} password ${HALON_REPO_PASS}" >> /etc/apt/auth.conf
 RUN apt-get update && apt-get install -y halon=5.10.0
 
-RUN apt-get install -y build-essential cmake
+RUN apt-get install -y build-essential cmake libpcre3-dev
 RUN echo -n "UBU1804" > /OSRELEASE.txt
 
 COPY build.sh /build.sh
