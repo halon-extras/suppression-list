@@ -22,7 +22,6 @@ RUN apt-get install -y build-essential cmake git libpcre3-dev
 RUN echo -n "UBU2004" > /OSRELEASE.txt
 
 RUN mkdir /var/log/halon && chown halon:halon /var/log/halon
-RUN mkdir /var/run/halon && chown halon:halon /var/run/halon
 
 RUN apt-get install -y supervisor
 COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
