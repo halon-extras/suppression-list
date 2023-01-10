@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y halon=5.10.0
 RUN /usr/bin/install -d /var/run/halon
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH
 
-RUN apt-get install -y build-essential cmake git libpcre++-dev
+RUN apt-get install -y build-essential cmake git libpcre3-dev
 
 RUN echo -n "UBU2004" > /OSRELEASE.txt
 

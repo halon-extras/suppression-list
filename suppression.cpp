@@ -7,7 +7,7 @@
 #include <fstream>
 #include <string.h>
 #include <syslog.h>
-#include <pcrecpp.h>
+#include <pcre.h>
 
 void list_open(const std::string& list, const std::string& path);
 bool list_lookup(const std::string& list, const std::string& recipient);
@@ -99,13 +99,19 @@ bool Halon_hsl_register(HalonHSLRegisterContext* ptr)
 	return true;
 }
 
-struct suppressionlist
+class suppressionlist
 {
-	std::string path;
-	std::list<pcrecpp::RE> regexs;
-	std::set<std::string> emails;
-	std::set<std::string> localparts;
-	std::set<std::string> domains;
+	public:
+		std::string path;
+		std::list<pcre*> regexs;
+		std::set<std::string> emails;
+		std::set<std::string> localparts;
+		std::set<std::string> domains;
+		~suppressionlist()
+		{
+			for (auto re : regexs)
+				pcre_free(re);
+		}
 };
 
 std::mutex listslock;
@@ -121,7 +127,18 @@ void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list)
 	{
 		if (line.empty()) continue;
 		if (line.size() > 2 && line[0] == '/' && line[line.size() - 1] == '/')
-			list->regexs.push_back(pcrecpp::RE(line.substr(1, line.size() - 2)));
+		{
+			const char* compile_error;
+			int eoffset;
+			pcre* re = pcre_compile(line.substr(1, line.size() - 2).c_str(), PCRE_CASELESS, &compile_error, &eoffset, nullptr);
+			if (!re)
+			{
+				syslog(LOG_ERR, "%s: %s: %s", path.c_str(), line.c_str(), compile_error);
+				continue;
+//				throw std::runtime_error(compile_error);
+			}
+			list->regexs.push_back(re);
+		}
 		else if (line[0] == '@')
 			list->domains.insert(line.substr(1));
 		else if (line[line.size() - 1] == '@')
@@ -181,8 +198,11 @@ bool list_lookup(const std::string& list, const std::string& email)
 	}
 
 	for (const auto & regex : suppression->regexs)
-		if (regex.PartialMatch(email))
+	{
+		int rc = pcre_exec(regex, nullptr, email.c_str(), (int)email.size(), 0, PCRE_PARTIAL | PCRE_NO_UTF8_CHECK, nullptr, 0);
+		if (rc == 0)
 			return true;
+	}
 
 	return false;
 }
