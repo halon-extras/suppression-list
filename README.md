@@ -1,10 +1,6 @@
 # Suppression list plugin
 
-This plugin allows you to define custom suppression lists which may be check from HSL (```suppression_list(id, email)```). The file may be reloaded after being updated using the halonctl command.
-
-```
-halonctl plugin command suppression-list reload list1
-```
+This plugin allows you to define custom suppression lists which may be check from HSL (```suppression_list(id, email)```).
 
 ## Installation
 
@@ -46,6 +42,20 @@ localpart@example.com
 @example.com
 localpart@
 /localpart/
+```
+
+## Exported commands
+
+The default is to auto reload suppression-list files when the configuration changes (`halonctl config reload`). However they can also be be reloaded manually using the halonctl command.
+
+```
+halonctl plugin command suppression-list reload list1
+```
+
+It's possible to test if an e-mail address is in a suppression list by issuing this command
+
+```
+halonctl plugin command suppression-list test list1 local-part@example.com
 ```
 
 ## Exported functions

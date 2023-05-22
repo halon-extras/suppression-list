@@ -11,9 +11,29 @@
 
 extern char *__progname;
 
-void list_open(const std::string& list, const std::string& path);
+class suppressionlist
+{
+	public:
+		std::string path;
+		bool autoreload = true;
+		std::list<pcre*> regexs;
+		std::set<std::string> emails;
+		std::set<std::string> localparts;
+		std::set<std::string> domains;
+		~suppressionlist()
+		{
+			for (auto re : regexs)
+				pcre_free(re);
+		}
+};
+
+void list_open(const std::string& list, const std::string& path, bool autoreload);
 bool list_lookup(const std::string& list, const std::string& recipient);
 void list_reopen(const std::string& list);
+void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list);
+
+std::mutex listslock;
+std::map<std::string, std::shared_ptr<suppressionlist>> lists;
 
 HALON_EXPORT
 int Halon_version()
@@ -28,18 +48,19 @@ bool Halon_init(HalonInitContext* hic)
 	HalonMTA_init_getinfo(hic, HALONMTA_INIT_CONFIG, nullptr, 0, &cfg, nullptr);
 
 	try {
-		auto lists = HalonMTA_config_object_get(cfg, "lists");
-		if (lists)
+		auto lists_ = HalonMTA_config_object_get(cfg, "lists");
+		if (lists_)
 		{
 			size_t l = 0;
 			HalonConfig* list;
-			while ((list = HalonMTA_config_array_get(lists, l++)))
+			while ((list = HalonMTA_config_array_get(lists_, l++)))
 			{
 				const char* id = HalonMTA_config_string_get(HalonMTA_config_object_get(list, "id"), nullptr);
 				const char* path = HalonMTA_config_string_get(HalonMTA_config_object_get(list, "path"), nullptr);
+				const char* autoreload = HalonMTA_config_string_get(HalonMTA_config_object_get(list, "autoreload"), nullptr);
 				if (!id || !path)
 					continue;
-				list_open(id, path);
+				list_open(id, path, !autoreload || strcmp(autoreload, "true") == 0);
 			}
 		}
 		return true;
@@ -50,6 +71,29 @@ bool Halon_init(HalonInitContext* hic)
 }
 
 HALON_EXPORT
+void Halon_config_reload(HalonConfig* cfg)
+{
+	listslock.lock();
+	for (auto & list : lists)
+	{
+		if (!list.second->autoreload)
+			continue;
+
+		auto suppression = std::make_shared<suppressionlist>();
+		suppression->path = list.second->path;
+		suppression->autoreload = list.second->autoreload;
+
+		try {
+			list_parse(suppression->path, suppression);
+			list.second = suppression;
+		} catch (const std::runtime_error& e) {
+			syslog(LOG_CRIT, "%s", e.what());
+		}
+	}
+	listslock.unlock();
+}
+
+HALON_EXPORT
 bool Halon_command_execute(HalonCommandExecuteContext* hcec, size_t argc, const char* argv[], size_t argvl[], char** out, size_t* outlen)
 {
 	try {
@@ -57,6 +101,12 @@ bool Halon_command_execute(HalonCommandExecuteContext* hcec, size_t argc, const 
 		{
 			list_reopen(argv[1]);
 			*out = strdup("OK");
+			return true;
+		}
+		if (argc > 2 && strcmp(argv[0], "test") == 0)
+		{
+			bool t = list_lookup(argv[1], argv[2]);
+			*out = strdup(t ? "true" : "false");
 			return true;
 		}
 		throw std::runtime_error("No such command");
@@ -78,19 +128,29 @@ void suppression_list(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLVal
 	if (x && HalonMTA_hsl_value_type(x) == HALONMTA_HSL_TYPE_STRING)
 		HalonMTA_hsl_value_get(x, HALONMTA_HSL_TYPE_STRING, &id, nullptr);
 	else
+	{
+		HalonHSLValue* e = HalonMTA_hsl_throw(hhc);
+		HalonMTA_hsl_value_set(e, HALONMTA_HSL_TYPE_EXCEPTION, "Bad id parameter", 0);
 		return;
+	}
 
 	x = HalonMTA_hsl_argument_get(args, 1);
 	if (x && HalonMTA_hsl_value_type(x) == HALONMTA_HSL_TYPE_STRING)
 		HalonMTA_hsl_value_get(x, HALONMTA_HSL_TYPE_STRING, &text, &textlen);
 	else
+	{
+		HalonHSLValue* e = HalonMTA_hsl_throw(hhc);
+		HalonMTA_hsl_value_set(e, HALONMTA_HSL_TYPE_EXCEPTION, "Bad email parameter", 0);
 		return;
+	}
 
 	try {
 		bool t = list_lookup(id, std::string(text, textlen));
 		HalonMTA_hsl_value_set(ret, HALONMTA_HSL_TYPE_BOOLEAN, &t, 0);
-	} catch (const std::runtime_error& e) {
-		syslog(LOG_CRIT, "%s", e.what());
+	} catch (const std::runtime_error& ex) {
+		HalonHSLValue* e = HalonMTA_hsl_throw(hhc);
+		HalonMTA_hsl_value_set(e, HALONMTA_HSL_TYPE_EXCEPTION, ex.what(), 0);
+		return;
 	}
 }
 
@@ -100,24 +160,6 @@ bool Halon_hsl_register(HalonHSLRegisterContext* ptr)
 	HalonMTA_hsl_module_register_function(ptr, "suppression_list", &suppression_list);
 	return true;
 }
-
-class suppressionlist
-{
-	public:
-		std::string path;
-		std::list<pcre*> regexs;
-		std::set<std::string> emails;
-		std::set<std::string> localparts;
-		std::set<std::string> domains;
-		~suppressionlist()
-		{
-			for (auto re : regexs)
-				pcre_free(re);
-		}
-};
-
-std::mutex listslock;
-std::map<std::string, std::shared_ptr<suppressionlist>> lists;
 
 void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list)
 {
@@ -162,10 +204,11 @@ void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list)
 		);
 }
 
-void list_open(const std::string& list, const std::string& path)
+void list_open(const std::string& list, const std::string& path, bool autoreload)
 {
 	auto suppression = std::make_shared<suppressionlist>();
 	suppression->path = path;
+	suppression->autoreload = autoreload;
 
 	list_parse(suppression->path, suppression);
 
@@ -227,6 +270,7 @@ void list_reopen(const std::string& list)
 
 	auto suppression = std::make_shared<suppressionlist>();
 	suppression->path = currentsuppression->path;
+	suppression->autoreload = currentsuppression->autoreload;
 
 	list_parse(suppression->path, suppression);
 
