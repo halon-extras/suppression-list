@@ -73,24 +73,14 @@ bool Halon_init(HalonInitContext* hic)
 HALON_EXPORT
 void Halon_config_reload(HalonConfig* cfg)
 {
-	listslock.lock();
 	for (auto & list : lists)
 	{
-		if (!list.second->autoreload)
-			continue;
-
-		auto suppression = std::make_shared<suppressionlist>();
-		suppression->path = list.second->path;
-		suppression->autoreload = list.second->autoreload;
-
 		try {
-			list_parse(suppression->path, suppression);
-			list.second = suppression;
+			list_reopen(list.first);
 		} catch (const std::runtime_error& e) {
 			syslog(LOG_CRIT, "%s", e.what());
 		}
 	}
-	listslock.unlock();
 }
 
 HALON_EXPORT
