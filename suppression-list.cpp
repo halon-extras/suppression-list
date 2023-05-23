@@ -75,6 +75,14 @@ void Halon_config_reload(HalonConfig* cfg)
 {
 	for (auto & list : lists)
 	{
+		listslock.lock();
+		if (!list.second->autoreload)
+		{
+			listslock.unlock();
+			continue;
+		}
+		listslock.unlock();
+
 		try {
 			list_reopen(list.first);
 		} catch (const std::runtime_error& e) {
