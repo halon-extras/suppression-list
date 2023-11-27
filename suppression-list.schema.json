@@ -21,6 +21,11 @@
           },
           "path": {
             "type": "string"
+          },
+          "autoreload": {
+            "type": "boolean",
+            "default": true,
+            "description": "Auto-reload on configuration reload"
           }
         }
       }
