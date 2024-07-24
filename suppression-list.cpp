@@ -169,6 +169,7 @@ void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list)
 	while (std::getline(file, line))
 	{
 		if (line.empty()) continue;
+		if (line[0] == '#') continue; // skip comments
 		if (line.size() > 2 && line[0] == '/' && line[line.size() - 1] == '/')
 		{
 			const char* compile_error;

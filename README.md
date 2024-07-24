@@ -44,6 +44,8 @@ localpart@
 /localpart/
 ```
 
+Lines starting with `#` are treated as comments.
+
 ## Exported commands
 
 The default is to auto reload suppression-list files when the configuration changes (`halonctl config reload`). However they can also be be reloaded manually using the halonctl command.
