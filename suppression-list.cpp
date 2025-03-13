@@ -27,13 +27,13 @@ class suppressionlist
 		}
 };
 
-void list_open(const std::string& list, const std::string& path, bool autoreload);
-bool list_lookup(const std::string& list, const std::string& recipient);
-void list_reopen(const std::string& list);
-void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list);
+static void list_open(const std::string& list, const std::string& path, bool autoreload);
+static bool list_lookup(const std::string& list, const std::string& recipient);
+static void list_reopen(const std::string& list);
+static void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list);
 
-std::mutex listslock;
-std::map<std::string, std::shared_ptr<suppressionlist>> lists;
+static std::mutex listslock;
+static std::map<std::string, std::shared_ptr<suppressionlist>> lists;
 
 HALON_EXPORT
 int Halon_version()
@@ -114,8 +114,7 @@ bool Halon_command_execute(HalonCommandExecuteContext* hcec, size_t argc, const 
 	}
 }
 
-HALON_EXPORT
-void suppression_list(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLValue* ret)
+static void suppression_list(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLValue* ret)
 {
 	HalonHSLValue* x;
 	char* id = nullptr;
@@ -159,7 +158,7 @@ bool Halon_hsl_register(HalonHSLRegisterContext* ptr)
 	return true;
 }
 
-void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list)
+static void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list)
 {
 	std::ifstream file(path);
 	if (!file.good())
@@ -203,7 +202,7 @@ void list_parse(const std::string& path, std::shared_ptr<suppressionlist> list)
 		);
 }
 
-void list_open(const std::string& list, const std::string& path, bool autoreload)
+static void list_open(const std::string& list, const std::string& path, bool autoreload)
 {
 	auto suppression = std::make_shared<suppressionlist>();
 	suppression->path = path;
@@ -216,7 +215,7 @@ void list_open(const std::string& list, const std::string& path, bool autoreload
 	listslock.unlock();
 }
 
-bool list_lookup(const std::string& list, const std::string& email)
+static bool list_lookup(const std::string& list, const std::string& email)
 {
 	listslock.lock();
 	auto l = lists.find(list);
@@ -255,7 +254,7 @@ bool list_lookup(const std::string& list, const std::string& email)
 	return false;
 }
 
-void list_reopen(const std::string& list)
+static void list_reopen(const std::string& list)
 {
 	listslock.lock();
 	auto l = lists.find(list);
