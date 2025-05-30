@@ -7,7 +7,8 @@
 #include <fstream>
 #include <string.h>
 #include <syslog.h>
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 
 extern char *__progname;
 
@@ -16,14 +17,14 @@ class suppressionlist
 	public:
 		std::string path;
 		bool autoreload = true;
-		std::list<pcre*> regexs;
+		std::list<pcre2_code*> regexs;
 		std::set<std::string> emails;
 		std::set<std::string> localparts;
 		std::set<std::string> domains;
 		~suppressionlist()
 		{
 			for (auto re : regexs)
-				pcre_free(re);
+				pcre2_code_free(re);
 		}
 };
 
@@ -171,16 +172,18 @@ static void list_parse(const std::string& path, std::shared_ptr<suppressionlist>
 		if (line[0] == '#') continue; // skip comments
 		if (line.size() > 2 && line[0] == '/' && line[line.size() - 1] == '/')
 		{
-			const char* compile_error;
-			int eoffset;
-			pcre* re = pcre_compile(line.substr(1, line.size() - 2).c_str(), PCRE_CASELESS, &compile_error, &eoffset, nullptr);
+			int errorcode;
+			PCRE2_SIZE offset;
+			pcre2_code* re = pcre2_compile((PCRE2_SPTR)line.substr(1, line.size() - 2).c_str(), PCRE2_ZERO_TERMINATED, PCRE2_CASELESS, &errorcode, &offset, nullptr);
 			if (!re)
 			{
-				syslog(LOG_ERR, "%s: %s: %s", path.c_str(), line.c_str(), compile_error);
+				PCRE2_UCHAR buffer[256];
+				pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
+				syslog(LOG_ERR, "%s: %s: %s", path.c_str(), line.c_str(), buffer);
 				++errors;
 				continue;
-//				throw std::runtime_error(compile_error);
 			}
+			// pcre2_jit_compile(re, PCRE2_JIT_COMPLETE); // too low complex regex to get any benfit
 			list->regexs.push_back(re);
 		}
 		else if (line[0] == '@')
@@ -244,13 +247,24 @@ static bool list_lookup(const std::string& list, const std::string& email)
 			return true;
 	}
 
+	pcre2_match_data* match_data = pcre2_match_data_create(1, nullptr);
 	for (const auto & regex : suppression->regexs)
 	{
-		int rc = pcre_exec(regex, nullptr, email.c_str(), (int)email.size(), 0, PCRE_PARTIAL | PCRE_NO_UTF8_CHECK, nullptr, 0);
-		if (rc == 0)
+		int ret = pcre2_match(regex,
+								(PCRE2_SPTR)email.c_str(),
+								email.size(),
+								0,
+								PCRE2_NO_UTF_CHECK,
+								match_data,
+								nullptr);
+		if (ret >= 0)
+		{
+			pcre2_match_data_free(match_data);
 			return true;
+		}
 	}
 
+	pcre2_match_data_free(match_data);
 	return false;
 }
 
