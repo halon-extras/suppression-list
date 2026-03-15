@@ -241,9 +241,9 @@ static bool list_lookup(const std::string& list, const std::string& email)
 	{
 		auto domain = email.substr(atsign + 1);
 		auto localpart = email.substr(0, atsign);
-		if (!domain.empty() && l->second->domains.find(domain) != suppression->domains.end())
+		if (!domain.empty() && suppression->domains.find(domain) != suppression->domains.end())
 			return true;
-		if (!localpart.empty() && l->second->localparts.find(localpart) != suppression->localparts.end())
+		if (!localpart.empty() && suppression->localparts.find(localpart) != suppression->localparts.end())
 			return true;
 	}
 
