@@ -48,7 +48,7 @@ Lines starting with `#` are treated as comments.
 
 ## Exported commands
 
-The default is to auto reload suppression-list files when the configuration changes (`halonctl config reload`). However they can also be be reloaded manually using the halonctl command.
+The default is to auto reload suppression-list files when the configuration changes (`halonctl config reload`). However they can also be reloaded manually using the halonctl command.
 
 ```
 halonctl plugin command suppression-list reload list1
@@ -66,7 +66,7 @@ These functions needs to be [imported](https://docs.halon.io/hsl/structures.html
 
 ### suppression_list(id, email)
 
-Check is email in in a suppression list based on its ID.
+Check if email is in a suppression list based on its ID.
 
 **Params**
 

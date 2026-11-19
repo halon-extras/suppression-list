@@ -183,7 +183,7 @@ static void list_parse(const std::string& path, std::shared_ptr<suppressionlist>
 				++errors;
 				continue;
 			}
-			// pcre2_jit_compile(re, PCRE2_JIT_COMPLETE); // too low complex regex to get any benfit
+			// pcre2_jit_compile(re, PCRE2_JIT_COMPLETE); // too low complex regex to get any benefit
 			list->regexs.push_back(re);
 		}
 		else if (line[0] == '@')
